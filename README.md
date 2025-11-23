@@ -103,12 +103,4 @@ This project is licensed under the MIT License.
 
 This simulation is for educational purposes only and does not replace professional mental health training. Always encourage individuals in crisis to seek help from qualified mental health professionals.
 
-## 📞 Resources
-
-- **National Suicide Prevention Lifeline**: 988
-- **Crisis Text Line**: Text HOME to 741741
-- **Teen Line**: 1-800-852-8336
-
----
-
 Built with ❤️ for mental health awareness
