@@ -7,29 +7,32 @@ import ProgressBar from './components/ProgressBar';
 import ResultsScreen from './components/ResultsScreen';
 import IntroScreen from './components/IntroScreen';
 import { INITIAL_SCENARIOS, SYSTEM_PROMPT } from './data/scenarios';
+import ChatInterface from './components/ChatInterface';
 
 const API_KEY = import.meta.env.VITE_API_KEY;
 
 const App = () => {
-  const [appState, setAppState] = useState('intro'); // intro, quiz, results
+  const [appState, setAppState] = useState('intro'); // intro, quiz, results, roleplay
   const [scenarios, setScenarios] = useState(INITIAL_SCENARIOS);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
   const [results, setResults] = useState([]);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState(null); // { score, feedback, pass }
 
-  const handleStart = () => {
+  const handleStartExam = () => {
     setAppState('quiz');
     setCurrentScenarioIndex(0);
     setResults([]);
+  };
+
+  const handleStartRoleplay = () => {
+    setAppState('roleplay');
   };
 
   const handleRestart = () => {
     setAppState('intro');
     setResults([]);
     setCurrentScenarioIndex(0);
-    // Optionally reset scenarios to default or keep generated ones. 
-    // We'll reset to default to allow generation again.
     setScenarios(INITIAL_SCENARIOS);
   };
 
@@ -63,9 +66,9 @@ const App = () => {
 
   const evaluateAnswer = async (userAnswer) => {
     setIsEvaluating(true);
-    
+
     const scenario = scenarios[currentScenarioIndex];
-    
+
     const prompt = `
       Scenario Context: ${scenario.context}
       Dialogue said to user (by a teen/youth): "${scenario.dialogue}"
@@ -95,9 +98,9 @@ const App = () => {
 
       const data = await response.json();
       const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      
+
       const jsonString = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-      
+
       let evaluation;
       try {
         evaluation = JSON.parse(jsonString);
@@ -109,7 +112,7 @@ const App = () => {
       evaluation.score = Math.max(0, Math.min(20, evaluation.score));
 
       setCurrentFeedback(evaluation);
-      
+
       setResults(prev => [...prev, {
         question: scenario.dialogue,
         userAnswer: userAnswer,
@@ -140,7 +143,7 @@ const App = () => {
       {/* Navigation Bar */}
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={handleRestart}>
             <Heart className="w-6 h-6 text-indigo-600 fill-indigo-600" />
             <span className="font-bold text-xl tracking-tight">MindGuard<span className="text-indigo-600">.Youth</span></span>
           </div>
@@ -149,32 +152,39 @@ const App = () => {
               Scenario {currentScenarioIndex + 1} of {scenarios.length}
             </div>
           )}
+          {appState === 'roleplay' && (
+            <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+              <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
+              Live Simulation
+            </div>
+          )}
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
-        
+
         {appState === 'intro' && (
-          <IntroScreen 
-            onStart={handleStart} 
+          <IntroScreen
+            onStartExam={handleStartExam}
+            onStartRoleplay={handleStartRoleplay}
           />
         )}
 
         {appState === 'quiz' && (
           <div className="max-w-3xl mx-auto relative">
             <ProgressBar current={currentScenarioIndex} total={scenarios.length} />
-            
-            <ScenarioCard 
-              scenario={scenarios[currentScenarioIndex]} 
+
+            <ScenarioCard
+              scenario={scenarios[currentScenarioIndex]}
               onSubmit={evaluateAnswer}
               isSubmitting={isEvaluating}
               onGetHint={handleGetHint}
             />
 
             {isEvaluating && <LoadingOverlay message="Evaluating response..." />}
-            
+
             {currentFeedback && (
-              <FeedbackModal 
+              <FeedbackModal
                 feedback={currentFeedback.feedback}
                 score={currentFeedback.score}
                 onNext={handleNextQuestion}
@@ -184,7 +194,7 @@ const App = () => {
         )}
 
         {appState === 'results' && (
-          <ResultsScreen 
+          <ResultsScreen
             totalScore={results.reduce((acc, curr) => acc + curr.score, 0)}
             maxScore={scenarios.length * 20}
             results={results}
@@ -192,8 +202,12 @@ const App = () => {
           />
         )}
 
+        {appState === 'roleplay' && (
+          <ChatInterface onExit={handleRestart} />
+        )}
+
       </main>
-      
+
       {/* Footer */}
       <footer className="py-8 text-center text-slate-400 text-sm">
         <p>&copy; {new Date().getFullYear()} MindGuard Youth Simulator.</p>
