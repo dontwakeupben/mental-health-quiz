@@ -30,9 +30,8 @@ const PERSONAS = [
 
 const getRandomPersona = () => PERSONAS[Math.floor(Math.random() * PERSONAS.length)];
 const PASSING_GRADE_THRESHOLD = 75;
-const N8N_CHAT_WEBHOOK = import.meta.env.DEV
-    ? (import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || 'http://localhost:5678/webhook/chat')
-    : '/api/chat-proxy';
+
+const N8N_CHAT_WEBHOOK = '/api/chat-proxy';
 
 const ChatInterface = ({ onExit }) => {
     const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
