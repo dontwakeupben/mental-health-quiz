@@ -39,6 +39,7 @@ npm install
 3. **Create a `.env` file:**
 ```env
 VITE_API_KEY=your_gemini_api_key_here
+VITE_N8N_CHAT_WEBHOOK_URL=http://localhost:5678/webhook/chat
 ```
 
 4. **Start development server:**
@@ -59,8 +60,12 @@ npm run dev
 
 1. Push your code to GitHub
 2. Connect your repository to [Vercel](https://vercel.com)
-3. Add `VITE_API_KEY` in Vercel's Environment Variables (Settings → Environment Variables)
+3. Add the following Environment Variables in Vercel (Settings → Environment Variables)
+	- `VITE_API_KEY`
+	- `N8N_CHAT_WEBHOOK_URL` (points to your private n8n endpoint)
 4. Deploy!
+
+Vercel automatically serves the `/api/chat-proxy` serverless function which forwards browser requests to your private n8n URL, keeping it hidden and avoiding CORS issues.
 
 ## 📝 Project Structure
 

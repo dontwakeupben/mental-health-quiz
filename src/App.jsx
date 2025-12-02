@@ -11,9 +11,18 @@ import ChatInterface from './components/ChatInterface';
 
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+const getRandomizedScenarios = () => {
+  const copy = [...INITIAL_SCENARIOS];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
 const App = () => {
   const [appState, setAppState] = useState('intro'); // intro, quiz, results, roleplay
-  const [scenarios, setScenarios] = useState(INITIAL_SCENARIOS);
+  const [scenarios, setScenarios] = useState(() => getRandomizedScenarios());
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
   const [results, setResults] = useState([]);
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -33,7 +42,7 @@ const App = () => {
     setAppState('intro');
     setResults([]);
     setCurrentScenarioIndex(0);
-    setScenarios(INITIAL_SCENARIOS);
+    setScenarios(getRandomizedScenarios());
   };
 
   // ✨ GEMINI FEATURE 2: AI Coach Hint
