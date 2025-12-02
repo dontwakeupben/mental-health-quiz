@@ -1,38 +1,47 @@
-export default async function handler(request, response) {
-    if (request.method !== 'POST') {
-        response.setHeader('Allow', 'POST');
-        return response.status(405).json({ error: 'Only POST is supported.' });
-    }
+// api/chat-proxy.js
+export default async function handler(req, res) {
+    // 1. Log that we received a request (helps debug)
+    console.log("Proxy received request:", req.method);
 
-    const targetUrl = process.env.N8N_CHAT_WEBHOOK_URL;
-    if (!targetUrl) {
-        return response.status(500).json({ error: 'Missing N8N_CHAT_WEBHOOK_URL environment variable.' });
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
-        const payload = typeof request.body === 'string'
-            ? request.body
-            : JSON.stringify(request.body ?? {});
+        // 2. Define the n8n URL directly here to be safe for now
+        // REPLACE THIS with your actual Railway URL
+        const n8nUrl = "https://n8n-production-dbe3.up.railway.app/webhook/chat";
 
-        const upstreamResponse = await fetch(targetUrl, {
-            method: 'POST',
+        console.log("Forwarding to n8n:", n8nUrl);
+
+        const n8nResponse = await fetch(n8nUrl, {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json",
             },
-            body: payload
+            body: JSON.stringify(req.body),
         });
 
-        const rawBody = await upstreamResponse.text();
-        let parsedBody;
-        try {
-            parsedBody = rawBody ? JSON.parse(rawBody) : {};
-        } catch {
-            parsedBody = { raw: rawBody };
+        // 3. Check if n8n itself failed
+        if (!n8nResponse.ok) {
+            const errorText = await n8nResponse.text();
+            console.error("n8n Error Response:", errorText);
+            throw new Error(`n8n responded with ${n8nResponse.status}: ${errorText}`);
         }
 
-        return response.status(upstreamResponse.status).json(parsedBody);
+        const data = await n8nResponse.json();
+
+        // 4. Send success back to frontend
+        res.status(200).json(data);
+
     } catch (error) {
-        console.error('Vercel chat proxy error:', error);
-        return response.status(500).json({ error: 'Proxy request failed. Check server logs for details.' });
+        // 5. Log the ACTUAL crash reason to Vercel logs
+        console.error("PROXY CRASHED:", error);
+
+        // Send a safe error to the frontend
+        res.status(500).json({
+            error: 'Internal Server Error',
+            details: error.message
+        });
     }
 }
