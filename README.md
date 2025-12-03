@@ -13,7 +13,7 @@ An interactive AI-powered simulation that tests your ability to identify and res
 
 ## 🚀 Live Demo
 
-[View Live Demo](https://your-vercel-url.vercel.app)
+[View Live Demo](https://mental-health-quiz-vert.vercel.app/)
 
 ## 🛠️ Tech Stack
 
