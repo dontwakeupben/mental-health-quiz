@@ -31,9 +31,10 @@ const PERSONAS = [
 const getRandomPersona = () => PERSONAS[Math.floor(Math.random() * PERSONAS.length)];
 const PASSING_GRADE_THRESHOLD = 75;
 
-const N8N_CHAT_WEBHOOK = '/api/chat-proxy';
+const N8N_CHAT_WEBHOOK = '/webhook/chat';
 
 const ChatInterface = ({ onExit }) => {
+    q
     const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
     const [persona, setPersona] = useState(() => getRandomPersona());
     const personaPrompt = useMemo(() => `
