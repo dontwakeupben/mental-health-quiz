@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart } from 'lucide-react';
+import logoImage from '../images/logo.png';
 import ScenarioCard from './components/ScenarioCard';
 import FeedbackModal from './components/FeedbackModal';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -153,7 +153,7 @@ const App = () => {
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={handleRestart}>
-            <Heart className="w-6 h-6 text-indigo-600 fill-indigo-600" />
+            <img src={logoImage} alt="MindGuard logo" className="w-8 h-8 object-contain" />
             <span className="font-bold text-xl tracking-tight">MindGuard<span className="text-indigo-600">.Youth</span></span>
           </div>
           {appState === 'quiz' && (
