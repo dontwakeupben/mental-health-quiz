@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
         // HARDCODE YOUR URL HERE FOR TESTING
         // Make sure there are no spaces at the end!
-        const n8nUrl = "https://n8n-production-dbe3.up.railway.app/webhook/chat";
+        const n8nUrl = "https://n8n-production-a007.up.railway.app/webhook/chat";
 
         // 5. THE REQUEST: Send to n8n
         const response = await fetch(n8nUrl, {

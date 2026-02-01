@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/webhook/:match*",
-            "destination": "https://n8n-production-dbe3.up.railway.app/webhook/:match*"
+            "destination": "https://n8n-production-a007.up.railway.app/webhook/:match*"
         }
     ]
 }
