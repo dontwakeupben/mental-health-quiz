@@ -154,7 +154,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={handleRestart}>
             <Heart className="w-6 h-6 text-indigo-600 fill-indigo-600" />
-            <span className="font-bold text-xl tracking-tight">MindGuard<span className="text-indigo-600">.Youth</span></span>
+            <span className="font-bold text-xl tracking-tight">YouthGuard</span>
           </div>
           {appState === 'quiz' && (
             <div className="text-sm font-medium text-slate-500">
