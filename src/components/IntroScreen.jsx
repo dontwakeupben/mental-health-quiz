@@ -5,7 +5,7 @@ const IntroScreen = ({ onStartExam, onStartRoleplay }) => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-700">
     <div className="p-2">
       <img
-        src="./images/logo.png"
+        src="/logo.png"
         alt="MindGuard Youth"
         className="w-32 h-32 object-contain"
       />
