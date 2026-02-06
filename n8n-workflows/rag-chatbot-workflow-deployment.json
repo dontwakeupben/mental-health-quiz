@@ -1,0 +1,240 @@
+{
+    "name": "Youth MHFA RAG Knowledge Base Chatbot",
+    "nodes": [
+        {
+            "id": "webhook-trigger",
+            "name": "RAG Chat Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                250,
+                300
+            ],
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "rag-chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "webhookId": "rag-chat"
+        },
+        {
+            "id": "parse-input",
+            "name": "Parse Input",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                450,
+                300
+            ],
+            "parameters": {
+                "jsCode": "// Extract message from various possible input formats\nconst body = $input.first().json.body || $input.first().json;\nconst message = body.message || body.query || body.text || body.content;\nconst sessionId = body.sessionId || body.session_id || 'default-session';\n\nreturn [{\n  json: {\n    message: message,\n    sessionId: sessionId,\n    originalBody: body\n  }\n}];"
+            }
+        },
+        {
+            "id": "ai-agent",
+            "name": "MHFA Knowledge Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1.7,
+            "position": [
+                650,
+                300
+            ],
+            "parameters": {
+                "text": "={{ $json.message }}",
+                "promptType": "define",
+                "options": {
+                    "systemMessage": "You are a knowledgeable and supportive Youth Mental Health First Aid (MHFA) assistant. Your role is to help users understand MHFA principles, procedures, and best practices for supporting young people with mental health challenges.\n\nYou have access to a knowledge base containing:\n- Youth MHFA certification procedures\n- ALGEE action plan details\n- Crisis intervention protocols\n- Common mental health concerns in youth\n- Communication techniques\n- Resource referrals\n- Platform usage help\n\nWhen answering:\n1. Use the retrieved knowledge to provide accurate, evidence-based information\n2. Be empathetic and non-judgmental in your tone\n3. Always prioritize safety - if someone mentions self-harm or crisis, emphasize seeking immediate professional help\n4. Clarify that you provide information and guidance, not professional medical advice\n5. Reference the ALGEE framework when relevant\n6. Keep responses concise but comprehensive\n\nIf the knowledge base doesn't contain relevant information, provide general MHFA guidance based on best practices."
+                }
+            }
+        },
+        {
+            "id": "respond-webhook",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                850,
+                200
+            ],
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ \"reply\": $json.output, \"sources\": $json.sourceDocuments ? $json.sourceDocuments.map(d => d.metadata?.source || 'knowledge base') : ['knowledge base'], \"timestamp\": new Date().toISOString() }) }}"
+            }
+        },
+        {
+            "id": "gemini-chat",
+            "name": "Google Gemini Chat",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                650,
+                500
+            ],
+            "parameters": {
+                "modelName": "models/gemini-2.0-flash-exp",
+                "options": {
+                    "temperature": 0.3
+                }
+            }
+        },
+        {
+            "id": "conversation-memory",
+            "name": "Conversation Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                850,
+                500
+            ],
+            "parameters": {
+                "sessionIdType": "fromInput"
+            }
+        },
+        {
+            "id": "vector-store-tool",
+            "name": "Knowledge Base Tool",
+            "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+            "typeVersion": 1.1,
+            "position": [
+                850,
+                700
+            ],
+            "parameters": {
+                "name": "knowledge_base",
+                "description": "Search the Youth Mental Health First Aid knowledge base for information about procedures, protocols, ALGEE framework, crisis response, and best practices. Use this tool when the user asks about: MHFA certification or training, ALGEE action plan steps, How to respond to specific situations, Crisis intervention procedures, Mental health information and resources, Platform or app usage help",
+                "topK": 4
+            }
+        },
+        {
+            "id": "vector-store",
+            "name": "MHFA Knowledge Store",
+            "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+            "typeVersion": 1.3,
+            "position": [
+                1050,
+                700
+            ],
+            "parameters": {
+                "mode": "retrieve",
+                "memoryKey": "mhfa-knowledge-base",
+                "options": {}
+            }
+        },
+        {
+            "id": "gemini-embeddings",
+            "name": "Google Gemini Embeddings",
+            "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                900
+            ],
+            "parameters": {
+                "modelName": "models/text-embedding-004"
+            }
+        }
+    ],
+    "connections": {
+        "RAG Chat Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Input",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Input": {
+            "main": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "MHFA Knowledge Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Conversation Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Knowledge Base Tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "MHFA Knowledge Store": {
+            "ai_vectorStore": [
+                [
+                    {
+                        "node": "Knowledge Base Tool",
+                        "type": "ai_vectorStore",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Embeddings": {
+            "ai_embedding": [
+                [
+                    {
+                        "node": "MHFA Knowledge Store",
+                        "type": "ai_embedding",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Knowledge Base Tool",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "saveDataSuccessExecution": "all",
+        "saveDataErrorExecution": "all"
+    }
+}

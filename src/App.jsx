@@ -8,6 +8,7 @@ import ResultsScreen from './components/ResultsScreen';
 import IntroScreen from './components/IntroScreen';
 import { INITIAL_SCENARIOS, SYSTEM_PROMPT } from './data/scenarios';
 import ChatInterface from './components/ChatInterface';
+import FloatingChatbot from './components/FloatingChatbot';
 
 const API_KEY = import.meta.env.VITE_API_KEY;
 
@@ -216,6 +217,9 @@ const App = () => {
         )}
 
       </main>
+
+      {/* Floating RAG Chatbot - Available on all screens */}
+      <FloatingChatbot />
 
       {/* Footer */}
       <footer className="py-8 text-center text-slate-400 text-sm">

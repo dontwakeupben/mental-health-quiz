@@ -1,0 +1,313 @@
+{
+    "name": "Youth MHFA RAG Knowledge Base Chatbot",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "rag-chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -200,
+                0
+            ],
+            "id": "webhook-trigger",
+            "name": "RAG Chat Webhook",
+            "webhookId": "rag-chat"
+        },
+        {
+            "parameters": {
+                "options": {
+                    "systemMessage": "You are a knowledgeable and supportive Youth Mental Health First Aid (MHFA) assistant. Your role is to help users understand MHFA principles, procedures, and best practices for supporting young people with mental health challenges.\n\nYou have access to a knowledge base containing:\n- Youth MHFA certification procedures\n- ALGEE action plan details\n- Crisis intervention protocols\n- Common mental health concerns in youth\n- Communication techniques\n- Resource referrals\n- Platform usage help\n\nWhen answering:\n1. Use the retrieved knowledge to provide accurate, evidence-based information\n2. Be empathetic and non-judgmental in your tone\n3. Always prioritize safety - if someone mentions self-harm or crisis, emphasize seeking immediate professional help\n4. Clarify that you provide information and guidance, not professional medical advice\n5. Reference the ALGEE framework when relevant\n6. Keep responses concise but comprehensive\n\nIf the knowledge base doesn't contain relevant information, provide general MHFA guidance based on best practices."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1.7,
+            "position": [
+                100,
+                0
+            ],
+            "id": "ai-agent",
+            "name": "MHFA Knowledge Agent"
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.0-flash-exp",
+                "options": {
+                    "temperature": 0.3
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                100,
+                200
+            ],
+            "id": "gemini-chat",
+            "name": "Google Gemini Chat",
+            "credentials": {
+                "googleGeminiApi": {
+                    "id": "YOUR_GEMINI_CREDENTIAL_ID",
+                    "name": "Google Gemini API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "memoryKey": "mhfa-rag-memory"
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                300,
+                200
+            ],
+            "id": "conversation-memory",
+            "name": "Conversation Memory"
+        },
+        {
+            "parameters": {
+                "name": "knowledge_base",
+                "description": "Search the Youth Mental Health First Aid knowledge base for information about procedures, protocols, ALGEE framework, crisis response, and best practices. Use this tool when the user asks about:\n- MHFA certification or training\n- ALGEE action plan steps\n- How to respond to specific situations\n- Crisis intervention procedures\n- Mental health information and resources\n- Platform or app usage help"
+            },
+            "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+            "typeVersion": 1,
+            "position": [
+                300,
+                0
+            ],
+            "id": "vector-store-tool",
+            "name": "Knowledge Base Tool"
+        },
+        {
+            "parameters": {
+                "mode": "retrieve",
+                "options": {},
+                "memoryKey": "mhfa-knowledge-base"
+            },
+            "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+            "typeVersion": 1,
+            "position": [
+                500,
+                0
+            ],
+            "id": "vector-store",
+            "name": "MHFA Knowledge Store"
+        },
+        {
+            "parameters": {
+                "modelName": "models/text-embedding-004"
+            },
+            "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                500,
+                200
+            ],
+            "id": "gemini-embeddings",
+            "name": "Google Gemini Embeddings",
+            "credentials": {
+                "googleGeminiApi": {
+                    "id": "YOUR_GEMINI_CREDENTIAL_ID",
+                    "name": "Google Gemini API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ \"reply\": $json.output, \"sources\": $json.sourceDocuments ? $json.sourceDocuments.map(d => d.metadata?.source || 'knowledge base') : ['knowledge base'], \"timestamp\": new Date().toISOString() }) }}"
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                400,
+                -100
+            ],
+            "id": "respond-webhook",
+            "name": "Respond to Webhook"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Extract message from various possible input formats\nconst body = $input.first().json.body || $input.first().json;\nconst message = body.message || body.query || body.text || body.content;\nconst sessionId = body.sessionId || body.session_id || 'default-session';\n\nreturn [{\n  json: {\n    message: message,\n    sessionId: sessionId,\n    originalBody: body\n  }\n}];"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                0,
+                0
+            ],
+            "id": "parse-input",
+            "name": "Parse Input"
+        }
+    ],
+    "connections": {
+        "RAG Chat Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Input",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Input": {
+            "main": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "MHFA Knowledge Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Conversation Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Knowledge Base Tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "MHFA Knowledge Store": {
+            "ai_vectorStore": [
+                [
+                    {
+                        "node": "Knowledge Base Tool",
+                        "type": "ai_vectorStore",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Embeddings": {
+            "ai_embedding": [
+                [
+                    {
+                        "node": "MHFA Knowledge Store",
+                        "type": "ai_embedding",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "MHFA Knowledge Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Knowledge Base Tool",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [
+        {
+            "name": "RAG",
+            "id": "rag-tag",
+            "color": "#7B68EE"
+        },
+        {
+            "name": "Chatbot",
+            "id": "chatbot-tag",
+            "color": "#00CED1"
+        }
+    ],
+    "description": "RAG-enabled chatbot for Youth Mental Health First Aid knowledge base. Uses Google Gemini for embeddings and chat, with in-memory vector store for document retrieval.",
+    "data": {
+        "knowledgeBaseDocuments": [
+            {
+                "content": "ALGEE Action Plan - The five steps of Mental Health First Aid:\n\nA - Approach, assess for risk of suicide or harm:\nApproach the person in a private, comfortable setting. Look for signs of crisis, especially any indication of suicidal thoughts or self-harm. If there is immediate danger, do not leave the person alone and seek emergency help.\n\nL - Listen non-judgmentally:\nGive the person your full attention. Listen with empathy and without interrupting. Avoid judgmental comments or body language. Let them share at their own pace. Show that you care and are there to support them.\n\nG - Give reassurance and information:\nProvide hope and realistic reassurance. Remind them that help is available and mental health challenges can be addressed. Share appropriate information about mental health in a way they can understand. Avoid making promises you cannot keep.\n\nE - Encourage appropriate professional help:\nSuggest professional resources such as counselors, therapists, doctors, or crisis hotlines. Offer to help them make contact or accompany them if appropriate. Emphasize that seeking help is a sign of strength.\n\nE - Encourage self-help and other support strategies:\nSuggest self-care activities, support groups, trusted friends or family members, and healthy coping strategies. Help them identify what has helped in the past and build a support network.",
+                "metadata": {
+                    "source": "ALGEE Action Plan",
+                    "category": "core_framework",
+                    "priority": "high"
+                }
+            },
+            {
+                "content": "Crisis Intervention Protocols:\n\nSuicidal Crisis Signs:\n- Talking about wanting to die or kill oneself\n- Looking for ways to kill oneself\n- Talking about feeling hopeless or having no purpose\n- Extreme mood swings\n- Giving away prized possessions\n\nImmediate Actions for Crisis:\n1. Stay with the person - never leave someone alone who is in crisis\n2. Remove means - if safe to do so, remove potential tools for self-harm\n3. Listen and validate - let them express their feelings without judgment\n4. Get help - contact emergency services (911 in US, 999 in UK/Singapore) or crisis hotlines\n5. Stay calm - your calm demeanor helps stabilize the situation\n\nEmergency Contacts:\n- Emergency Services: 911 (US), 999 (Singapore/UK), 112 (EU)\n- National Suicide Prevention Lifeline: 988 (US)\n- Samaritans: 116 123 (UK), 1800 221 4444 (Singapore)\n- Crisis Text Line: Text HOME to 741741 (US)\n\nAfter Crisis:\n- Follow up with the person\n- Connect them with ongoing support\n- Document the incident if required by your role\n- Seek support for yourself as a first aider",
+                "metadata": {
+                    "source": "Crisis Intervention Guide",
+                    "category": "crisis_response",
+                    "priority": "critical"
+                }
+            },
+            {
+                "content": "Common Mental Health Concerns in Youth:\n\nAnxiety Disorders:\nSigns: Excessive worry, restlessness, difficulty concentrating, physical symptoms (headaches, stomachaches), avoidance of activities.\nHow to help: Validate their feelings, help them break tasks into smaller steps, encourage breathing exercises, suggest professional support.\n\nDepression:\nSigns: Persistent sadness, loss of interest in activities, changes in sleep or appetite, difficulty concentrating, feelings of worthlessness, withdrawal from friends.\nHow to help: Listen without trying to 'fix' them, encourage professional help, support healthy routines, stay connected.\n\nEating Disorders:\nSigns: Preoccupation with weight, restrictive eating, binge eating, excessive exercise, distorted body image, secrecy around food.\nHow to help: Express concern without focusing on appearance, encourage professional help specialized in eating disorders, avoid power struggles over food.\n\nSelf-Harm:\nSigns: Unexplained injuries, wearing long sleeves in warm weather, isolation, emotional distress.\nHow to help: Stay calm, don't judge, ask directly but gently about injuries, encourage professional help, focus on underlying emotions rather than the behavior.\n\nSubstance Use:\nSigns: Changes in behavior, decline in performance, secretive behavior, physical signs of intoxication, changes in friend groups.\nHow to help: Express concern, avoid lecturing, encourage professional assessment, support positive activities and relationships.",
+                "metadata": {
+                    "source": "Youth Mental Health Guide",
+                    "category": "mental_health_info",
+                    "priority": "high"
+                }
+            },
+            {
+                "content": "Communication Techniques for Youth MHFA:\n\nActive Listening:\n- Give full attention (put away distractions)\n- Use open body language\n- Make appropriate eye contact\n- Use verbal encouragers ('I see', 'Tell me more')\n- Paraphrase to confirm understanding\n\nOpen-Ended Questions:\nInstead of: 'Are you feeling sad?'\nTry: 'How have you been feeling lately?'\n\nInstead of: 'Did something happen?'\nTry: 'What's been going on for you?'\n\nEmpathy Statements:\n- 'It sounds like you're going through a really difficult time.'\n- 'I can hear how much this is affecting you.'\n- 'Thank you for trusting me with this.'\n- 'Your feelings are valid.'\n\nWhat to Avoid:\n- Minimizing: 'It's not that bad' or 'Others have it worse'\n- Giving advice too quickly: 'You should just...'\n- Making it about you: 'I know how you feel'\n- Rushing to solutions\n- Breaking confidentiality (except in crisis situations)\n\nCultural Considerations:\n- Be aware of cultural differences in expressing distress\n- Respect diverse beliefs about mental health\n- Use interpreters when needed\n- Consider family dynamics that may affect help-seeking",
+                "metadata": {
+                    "source": "Communication Skills Guide",
+                    "category": "communication",
+                    "priority": "high"
+                }
+            },
+            {
+                "content": "Platform Usage Help - MindGuard Youth:\n\nCertification Exam Mode:\n- Navigate through realistic scenarios simulating youth mental health situations\n- Type your response to each scenario as you would in real life\n- AI evaluates your response based on MHFA principles\n- Receive immediate feedback with scores (0-20) and personalized guidance\n- Passing threshold: 75% overall\n- Get hints if stuck by clicking the hint button\n\nRoleplay Simulation Mode:\n- Practice with AI-generated youth personas (Alex, Maya, Jordan)\n- Each persona has unique challenges and communication styles\n- Real-time conversation practice with immediate feedback\n- Graded on empathy, safety awareness, and appropriate responses\n- Try different scenarios to build confidence\n\nUsing This Chatbot (RAG Knowledge Base):\n- Ask questions about MHFA procedures anytime\n- Get instant answers about ALGEE framework\n- Learn about crisis protocols\n- Access mental health information\n- Understand communication techniques\n- Available on all screens via the floating button\n\nTips for Best Results:\n- Be specific in your questions\n- Use the knowledge base to review before exams\n- Practice regularly in roleplay mode\n- Apply ALGEE framework in your responses\n- Remember: this is training - don't be afraid to make mistakes and learn",
+                "metadata": {
+                    "source": "Platform Help Documentation",
+                    "category": "help",
+                    "priority": "medium"
+                }
+            },
+            {
+                "content": "Youth MHFA Certification Requirements:\n\nTraining Overview:\nYouth Mental Health First Aid is an evidence-based training program that teaches adults how to identify, understand, and respond to signs of mental health and substance use challenges among adolescents ages 12-18.\n\nCourse Components:\n- 6.5 hours of instruction (can be split across multiple sessions)\n- Interactive activities and role-playing exercises\n- Discussion of common mental health challenges in youth\n- Overview of crisis situations and how to respond\n- Resource and referral information\n\nWhat You Will Learn:\n- Risk factors and warning signs of mental health problems in adolescents\n- Importance of early intervention\n- ALGEE action plan for crisis and non-crisis situations\n- How to connect youth to professional help\n- Build understanding of trauma, self-care, and recovery\n\nCertification:\n- Valid for 3 years from completion date\n- Participants receive a certificate upon completion\n- Requires full attendance and participation\n- Some regions offer continuing education credits\n\nTarget Audience:\n- Teachers and school staff\n- Parents and family members\n- Healthcare workers\n- Youth workers and coaches\n- Anyone who regularly interacts with adolescents",
+                "metadata": {
+                    "source": "Certification Information",
+                    "category": "certification",
+                    "priority": "medium"
+                }
+            }
+        ]
+    }
+}
