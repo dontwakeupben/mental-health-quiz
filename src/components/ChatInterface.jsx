@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Bot, User, Send } from 'lucide-react';
+import { User, Send } from 'lucide-react';
+import AnimatedSprite from './AnimatedSprite';
 
 const PERSONAS = [
     {
@@ -181,49 +182,19 @@ Stay in character, speak casually, avoid clinical advice, and focus on feelings/
     return (
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 animate-in slide-in-from-bottom-8">
             <div className="lg:flex-1 h-[600px] bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
-                <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-indigo-100 p-2 rounded-full">
-                            <Bot className="w-6 h-6 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800">Roleplay Scenario: "{persona.name}" ({persona.age}y)</h3>
-                            <p className="text-xs text-slate-500">Goal: {persona.goal}</p>
-                            <p className="text-[11px] text-slate-400">{persona.vibe}</p>
-                        </div>
+                <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center gap-3">
+                    <div className="bg-indigo-100 p-1 rounded-full">
+                        <AnimatedSprite
+                            direction="south"
+                            isWalking={false}
+                            autoRotate={false}
+                            size="w-8 h-8"
+                        />
                     </div>
-                    <div className="flex items-center gap-2">
-                        {conversationStatus === 'paused' && (
-                            <button
-                                type="button"
-                                onClick={handleResumeSession}
-                                className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1 hover:bg-emerald-100 transition-colors"
-                            >
-                                Resume Session
-                            </button>
-                        )}
-                        {conversationStatus === 'paused' && (
-                            <button
-                                type="button"
-                                onClick={() => resetConversation()}
-                                className="text-xs font-semibold text-rose-700 bg-white border border-rose-200 rounded-full px-3 py-1 hover:bg-rose-50 transition-colors"
-                            >
-                                Retry Scenario
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={handleNewScenario}
-                            className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 hover:bg-indigo-100 transition-colors"
-                        >
-                            Try New Scenario
-                        </button>
-                        <button
-                            onClick={onExit}
-                            className="text-sm font-medium text-slate-500 hover:text-red-600 transition-colors"
-                        >
-                            Exit Session
-                        </button>
+                    <div>
+                        <h3 className="font-bold text-slate-800">Roleplay Scenario: "{persona.name}" ({persona.age}y)</h3>
+                        <p className="text-xs text-slate-500">Goal: {persona.goal}</p>
+                        <p className="text-[11px] text-slate-400">{persona.vibe}</p>
                     </div>
                 </div>
 
@@ -237,8 +208,8 @@ Stay in character, speak casually, avoid clinical advice, and focus on feelings/
                             className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div className={`flex max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} gap-3`}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === 'user' ? 'bg-indigo-600' : 'bg-white border border-slate-200'}`}>
-                                    {msg.sender === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-slate-600" />}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${msg.sender === 'user' ? 'bg-indigo-600' : 'bg-white border border-slate-200'}`}>
+                                    {msg.sender === 'user' ? <User className="w-4 h-4 text-white" /> : <AnimatedSprite direction="south" isWalking={false} autoRotate={false} size="w-6 h-6" />}
                                 </div>
                                 <div
                                     className={`p-4 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user'
@@ -253,8 +224,8 @@ Stay in character, speak casually, avoid clinical advice, and focus on feelings/
                     ))}
                     {isTyping && (
                         <div className="flex justify-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center">
-                                <Bot className="w-4 h-4 text-slate-600" />
+                            <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
+                                <AnimatedSprite direction="south" isWalking={false} autoRotate={false} size="w-6 h-6" />
                             </div>
                             <div className="bg-white border border-slate-200 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1">
                                 <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
@@ -286,12 +257,12 @@ Stay in character, speak casually, avoid clinical advice, and focus on feelings/
                 </div>
             </div>
 
-            <aside className="lg:w-80 bg-white rounded-2xl shadow-xl border border-slate-200">
+            <aside className="lg:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col">
                 <div className="border-b border-slate-200 p-4">
                     <p className="text-sm font-semibold text-slate-700">Performance Feedback</p>
                     <p className="text-xs text-slate-400">Updated after every AI reply</p>
                 </div>
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 flex-1">
                     <div>
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Latest Grade</p>
                         <p className={`text-3xl font-bold mt-1 ${feedbackTone}`}>
@@ -310,6 +281,40 @@ Stay in character, speak casually, avoid clinical advice, and focus on feelings/
                             <p className="font-semibold">Session Paused</p>
                         </div>
                     )}
+                </div>
+                <div className="border-t border-slate-200 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-slate-700 mb-2">Session Controls</p>
+                    {conversationStatus === 'paused' && (
+                        <button
+                            type="button"
+                            onClick={handleResumeSession}
+                            className="w-full text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
+                        >
+                            Resume Session
+                        </button>
+                    )}
+                    {conversationStatus === 'paused' && (
+                        <button
+                            type="button"
+                            onClick={() => resetConversation()}
+                            className="w-full text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 hover:bg-rose-100 transition-colors flex items-center justify-center gap-2"
+                        >
+                            Retry Scenario
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={handleNewScenario}
+                        className="w-full text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                        Try New Scenario
+                    </button>
+                    <button
+                        onClick={onExit}
+                        className="w-full text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 hover:bg-slate-100 hover:text-red-600 transition-colors"
+                    >
+                        Exit Session
+                    </button>
                 </div>
             </aside>
         </div>

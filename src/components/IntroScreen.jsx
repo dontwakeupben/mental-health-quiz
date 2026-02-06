@@ -1,11 +1,14 @@
 import React from 'react';
 import { CheckCircle2, MessageSquare } from 'lucide-react';
-import logoImage from '../../images/logo.png';
 
 const IntroScreen = ({ onStartExam, onStartRoleplay }) => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-700">
     <div className="p-2">
-      <img src={logoImage} alt="MindGuard logo" className="w-40 h-40 object-contain" />
+      <img
+        src="./images/logo.png"
+        alt="MindGuard Youth"
+        className="w-32 h-32 object-contain"
+      />
     </div>
     <div className="space-y-4 max-w-2xl">
       <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
